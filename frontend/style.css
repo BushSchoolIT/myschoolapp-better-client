@@ -182,7 +182,7 @@ a {
 
 .left-offset {
 	padding-left: 110px;
-	padding-left: min(110px, 15vw);
+	padding-left: min(110px, 8vw);
 }
 
 .rounded-cont {
@@ -218,6 +218,10 @@ img.rounded-cont {
 	max-width: 70%;
 }
 
+.left-offset .form {
+	max-width: clamp(200px, 50%, 500px);
+}
+
 .topright-button {
 	position: absolute;
 	right: 3%;
@@ -240,10 +244,14 @@ img.rounded-cont {
 	margin: 0 0 15px 0;
 }
 
-.input-label {
+.input-label, label {
 	text-align: left;
-	font-size: 18px;
+	font-size: calc(var(--theme-main-font-size) * 1.125);
 	user-select: none;
+}
+
+label:not(:last-child) > input {
+	margin-bottom: 20px;
 }
 
 
@@ -259,7 +267,7 @@ input[type=date] {
 }
 
 .form-title {
-	font-size: 30px;
+	font-size: calc(var(--theme-main-font-size) * 1.9);
 	margin-bottom: 0;
 	padding: 0;
 }
@@ -278,13 +286,13 @@ input:not([type=submit]) {
 	border-right: none;
 	border-bottom: 1px solid var(--theme-muted-text);
 	color: var(--theme-text-color);
-	font-size: 20px;
+	font-size: calc(var(--theme-main-font-size) * 1.25);
 	transition: 0.3s;
 	max-width: 100%;
 }
 
 input:not([type=submit]):focus {
-	border-bottom: 2px solid var(--theme-text-color);
+	border-bottom: 2px solid var(--theme-muted-text);
 }
 
 input:not([type=submit]):not(.hidden) {
@@ -307,7 +315,7 @@ select {
 	outline: 0;
 	border: none;
 	color: var(--theme-text-color);
-	font-size: 20px;
+	font-size: calc(var(--theme-main-font-size) * 1.25);
 	padding-right: 1em;
 	z-index: 1;
 	cursor: inherit;
@@ -342,13 +350,13 @@ select, .select-cont::after {
 
 .round-button {
 	background: var(--theme-button-color);
-	color: var(--theme-text-color);
+	color: var(--theme-button-text-color);
 	text-decoration: none;
 	user-select: none;
 	cursor: pointer;
 	margin: 5px;
 	border-radius: 2em;
-	--width-and-height: clamp(10px, 1.5vw, 15px);
+	--width-and-height: clamp(10px, 1.5vw, var(--theme-main-font-size));
 	padding: calc(var(--width-and-height) / 5);
 	width: var(--width-and-height);
 	height: var(--width-and-height);
@@ -365,7 +373,7 @@ select, .select-cont::after {
 	filter: brightness(1.25); 
 }
 
-#feedback {
+#settings {
 	width: auto;
 	padding: 3px 8px;
 	position: fixed;
@@ -376,7 +384,7 @@ select, .select-cont::after {
 	background: var(--theme-muted-highlight);
 }
 
-#feedback:hover {
+#settings:hover {
 	filter: brightness(1.25) drop-shadow(2px 2px 2px var(--theme-shadow-color));
 }
 
@@ -388,17 +396,22 @@ select, .select-cont::after {
 	margin: auto;
 	text-align: center;
 	text-decoration: none;
-	color: var(--theme-text-color);
+	color: var(--theme-button-text-color);
 	width: auto;
 	vertical-align: middle;
 	display: inline-block;
 	padding: 5px 20px 5px 20px;
 	transition: 0.3s;
 	border: none;
-	font-size: 16px;
+	font-size: var(--theme-main-font-size);
 }
 
-.button + .button {
+.button input {
+	font-size: var(--theme-main-font-size);
+	padding: 0;
+}
+
+.button:not(.nomargin) + .button {
 	margin-left: 10px;
 }
 
@@ -411,7 +424,7 @@ select, .select-cont::after {
 .bad_button:hover {
 	filter: unset !important;
 	background: var(--theme-indicator-bad);
-	color: var(--theme-text-color);
+	color: var(--theme-button-text-color);
 }
 
 input.button {
@@ -435,6 +448,10 @@ input.button {
 	display: none;
 }
 
+.nomargin {
+	margin: 0;
+}
+
 .center {
 	margin-left: auto;
 	margin-right: auto;
@@ -448,12 +465,12 @@ input.button {
 }
 
 #landing_page_cont > h1 {
-	font-size: 3em;
-	font-size: clamp(30px, 4vw, 50px);
+	font-size: calc(var(--theme-main-font-size) * 3);
+	font-size: clamp(calc(var(--theme-main-font-size) * 1.9), 4vw, calc(var(--theme-main-font-size) * 3.125));
 }
 
 .big-button {
-	font-size: 20px;
+	font-size: calc(var(--theme-main-font-size) * 1.25);
 }
 
 .ohidden {
@@ -474,12 +491,7 @@ input.button {
 
 .schedule {
 	border-collapse: collapse;
-	border-radius: 10px;
-	margin: 30px;
-}
-
-.schedule * {
-	transition: 0.3s;
+	margin: 8px;
 }
 
 .schedule th {
@@ -627,7 +639,12 @@ input.button {
 }
 
 #date {
-	font-size: clamp(12px, 2vw, 20px);
+	font-size: clamp(calc(var(--theme-main-font-size) * 0.75), 2vw, calc(var(--theme-main-font-size) * 1.25));
+}
+
+#feedbackform {
+	max-width: 800px;
+	margin-right: 20px;
 }
 
 a:not([class]), .link {
@@ -644,6 +661,7 @@ a:not([class]):hover, .link:hover {
 
 /* indicator styles */
 .round-indicator {
+	color: var(--theme-button-text-color);
 	border-radius: 10rem;
 	display: inline;
 	white-space: nowrap;
@@ -860,6 +878,7 @@ body::-webkit-scrollbar {
 
 .current-tab {
 	background: var(--theme-muted-highlight);
+	color: var(--theme-button-text-color);
 }
 
 .bulletin-item {
@@ -874,8 +893,8 @@ body::-webkit-scrollbar {
 	margin-top: 6px;
 }
 
-.person * {
-	font-size: clamp(12px, 2.5vw, 14px);
+.person {
+	font-size: clamp(calc(var(--theme-main-font-size) * 0.75), 2.5vw, calc(var(--theme-main-font-size) * 0.875));
 }
 
 .person {
@@ -895,6 +914,21 @@ body::-webkit-scrollbar {
 	object-fit: cover; /* crop to square */
 	width: 75%;
 	height: 75%;
+}
+
+.class {
+	--width-and-height: clamp(120px, 35vw, 160px);
+	--person-margin: min(15px, 2vw);
+}
+
+.class h3 {
+	color: var(--theme-link-color);
+	transition: 0.1s;
+	margin-top: 0;
+}
+
+.class:hover h3 {
+	filter: brightness(1.13);
 }
 
 .rounded-cont:not(.person) img {

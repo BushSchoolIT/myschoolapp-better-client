@@ -14,18 +14,26 @@ function save_data(nuser) {
 
 /** returns a user object */
 async function get_user() {
-	nuser = await localforage.getItem("user");
-	if (!nuser || !removehttp(nuser.baseurl)) {
-		nuser = {
-			baseurl: "https://bush.myschoolapp.com",
-			username: "",
-			last_page: "schedule.html",
-			// enabling debug mode allows the client to fetch test data and fill it in on blank templates
-			debug_mode: false,
-			default_description: "",
-			token: ""
-		};
+	let default_user = {
+		baseurl: "",
+		username: "",
+		last_page: "schedule.html",
+		date_format: "MM/DD/YYYY",
+		token: "",
+		theme: "default.css",
+		
+		// enabling debug mode allows the client to fetch test data and fill it in on blank templates
+		debug_mode: false,
+		default_description: ""
+	};
+	let nuser = await localforage.getItem("user");
+	if (!nuser || !removehttp(nuser.baseurl)) return default_user;
+	
+	for (let i in default_user) {
+		nuser[i] = nuser[i] || default_user[i];
+
 	}
+	
 	return nuser;
 }
 
@@ -79,10 +87,10 @@ function scroll_horizontally(e) {
 
 /** fills in the header from the template */
 async function get_header() {
-	var header = document.querySelector("#header");
+	let header = document.querySelector("#header");
 	if (!header.getAttribute("data-loaded")) header.classList.add("ohidden", "standard_transition");
-	var template_data = await fetch("templates/header.hbs").then(a => a.text());
-	var tabs = [
+	let template_data = await fetch("templates/header.hbs").then(a => a.text());
+	let tabs = [
 		{
 			title: "schedule", // the text that goes in the tab
 			url: "schedule.html",
@@ -98,35 +106,32 @@ async function get_header() {
 			url: "assignments.html",
 			url_matches: ["assignments"]
 		}
-	]
-	for (var tab of tabs) {
-		var cur_url = new URL(location);
-		var cur_path = cur_url.pathname.split("/");
-		cur_path = cur_path[cur_path.length - 1];
-		cur_path = cur_path.split(".")[0];
-		cur_path = cur_path.toLowerCase();
-		tab.class_name = "";
-		if (tab.url_matches.some((a) => a == cur_path)) {
-			tab.class_name = "current-tab"; // add class name if URL matches the `url_matches` key
-		}
+	];
+	
+	let cur_path = location.pathname.split("/");
+	cur_path = cur_path[cur_path.length - 1];
+	cur_path = cur_path.split(".")[0];
+	cur_path = cur_path.toLowerCase();
+	
+	for (let tab of tabs) {
+		tab.is_current = tab.url_matches.some((a) => a == cur_path); // this is the current tab if one of its URLs matches the current one
 	}
-	var template = Handlebars.compile(template_data);
-	var html = template({tabs});
+	let template = Handlebars.compile(template_data);
+	let html = template({tabs});
 	header.innerHTML = html;
 	header.classList.remove("ohidden");
 	header.setAttribute("data-loaded", "true");
 	
-	// feedback button
-	if (document.querySelector("#feedback")) return;
-	let feedback_button = document.createElement("a");
-	feedback_button.id = "feedback";
-	feedback_button.classList.add("round-button", "ohidden");
-	feedback_button.href = "https://forms.gle/t2XREwBjHR5dGtfD9";
-	feedback_button.innerText = "feedback";
-	feedback_button.target = "_blank";
-	document.body.appendChild(feedback_button);
+	// settings button
+	if (document.querySelector("#settings") || cur_path.endsWith("settings")) return;
+	let settings_button = document.createElement("a");
+	settings_button.id = "settings";
+	settings_button.classList.add("round-button", "ohidden");
+	settings_button.href = "settings.html";
+	settings_button.innerText = "settings";
+	document.body.appendChild(settings_button);
 	setTimeout(() => {
-		feedback_button.classList.remove("ohidden");
+		settings_button.classList.remove("ohidden");
 	}, 100);
 }
 
@@ -134,8 +139,8 @@ async function get_header() {
 	* @param {Object} element - the element to empty
 */
 function empty_all(element) {
-	var children = Array.from(element.childNodes); // Array.from makes it so indexes won't change during deletion
-	for (var node of children) {
+	let children = Array.from(element.childNodes); // Array.from makes it so indexes won't change during deletion
+	for (let node of children) {
 		if (!node.id) {
 			node.remove();
 			continue;
@@ -216,3 +221,10 @@ function htmltotext(html) {
 	text = text.replace(/>/g, "&gt;");
 	return text;
 }
+
+// service worker
+window.addEventListener("DOMContentLoaded", () => {
+	if ("serviceWorker" in navigator) {
+		navigator.serviceWorker.register("serviceworker.js");
+	}
+});
