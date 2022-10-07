@@ -1,9 +1,9 @@
-const base_endpoint = "/.netlify/functions/cors/"; // this is a const because we don't want the risk of a man in the middle attack
-// this endpoint is for non-plaintext. for plaintext, always use base_endpoint
-const download_endpoint = "/.netlify/functions/download/"; // this is a const for the same reason
-var user;
+const base_endpoint = "/proxy/"; // this is a const because we don't want the risk of a man in the middle attack
+let user;
+let templates = {};
+window.is_portalplus = true; // this makes it such that the browser extension knows where we are
 
-/** saves data 
+/** saves data
  * @param {Object} user - the `user` object
  */
 function save_data(nuser) {
@@ -21,36 +21,49 @@ async function get_user() {
 		date_format: "MM/DD/YYYY",
 		token: "",
 		theme: "default.css",
-		
+		blackbaud_login: true, // is using the browser extension?
+
 		// enabling debug mode allows the client to fetch test data and fill it in on blank templates
 		debug_mode: false,
 		default_description: ""
 	};
 	let nuser = await localforage.getItem("user");
 	if (!nuser || !removehttp(nuser.baseurl)) return default_user;
-	
+
 	for (let i in default_user) {
 		nuser[i] = nuser[i] || default_user[i];
 	}
-	
+
 	return nuser;
 }
 
 /** automatically fills out handlebars template
- * @param {String} template_id - the id of the template element
+ * @param {String} template_name - the id of the template element or URL of the template
  * @param {Object} data - the data to fill.
  * @param {String} target_id - the id of the element to put the final HTML
  * @param {Object} handlebar_options - extra handlebars config
+ * @param {Boolean} is_url - fetch or use elem ID?
  */
-function fill_template(template_id, data, target_id, handlebar_options) {
+async function fill_template(template_name, data, target_id, handlebar_options, is_url) {
 	if (typeof data != "object") {
 		return;
 	}
 	if (!handlebar_options) {
 		handlebar_options = {};
 	}
-	var template = Handlebars.compile(document.querySelector("#" + template_id).innerHTML, handlebar_options);
-	var html = template(data);
+	let template_string;
+	if (is_url) {
+		template_string = templates[template_name];
+		if (!template_string) {
+			template_string = await fetch(template_name).then(a => a.text());
+			templates[template_name] = template_string;
+		}
+	}
+	else {
+		template_string = document.querySelector("#" + template_name).innerHTML;
+	}
+	let template = Handlebars.compile(template_string, handlebar_options);
+	let html = template(data);
 	document.querySelector("#" + target_id).innerHTML += html;
 }
 
@@ -59,8 +72,8 @@ async function logged_in() {
 	if (!user.baseurl) {
 		return false;
 	}
-	var req = await fetch(base_endpoint + user.baseurl + "/api/webapp/userstatus/");
-	var data = await req.json();
+	let req = await fetch(base_endpoint + user.baseurl + "/api/webapp/userstatus/");
+	let data = await req.json();
 	return data.TokenValid;
 }
 
@@ -88,7 +101,6 @@ function scroll_horizontally(e) {
 async function get_header() {
 	let header = document.querySelector("#header");
 	if (!header.getAttribute("data-loaded")) header.classList.add("ohidden", "standard_transition");
-	let template_data = await fetch("templates/header.hbs").then(a => a.text());
 	let tabs = [
 		{
 			title: "schedule", // the text that goes in the tab
@@ -106,21 +118,22 @@ async function get_header() {
 			url_matches: ["assignments"]
 		}
 	];
-	
+
 	let cur_path = location.pathname.split("/");
 	cur_path = cur_path[cur_path.length - 1];
 	cur_path = cur_path.split(".")[0];
 	cur_path = cur_path.toLowerCase();
-	
+
 	for (let tab of tabs) {
 		tab.is_current = tab.url_matches.some((a) => a == cur_path); // this is the current tab if one of its URLs matches the current one
 	}
-	let template = Handlebars.compile(template_data);
-	let html = template({tabs});
-	header.innerHTML = html;
+	header.innerHTML = "";
+	await fill_template("templates/header.hbs", {tabs}, "header", {}, true);
 	header.classList.remove("ohidden");
 	header.setAttribute("data-loaded", "true");
-	
+
+	fetch(`https://cukmekerb.goatcounter.com/count?p=${cur_path}.html&t=${document.title}&s=${window.innerWidth},${window.innerHeight}&rnd=${Math.random()}`);
+
 	// settings button
 	if (document.querySelector("#settings") || cur_path.endsWith("settings")) return;
 	let settings_button = document.createElement("a");
@@ -153,26 +166,26 @@ async function get_image_path() {
 //  uses es9, which mobile safari doesn't support, ugh
 //  supporting the old thing adds three extra lines. ew
 //  es9 code:
-//  var pattern = /(?<=\"FtpImagePath\"\s*:\s*\")([^\'*\"*\,*\}*]*)/g;
+//  let pattern = /(?<=\"FtpImagePath\"\s*:\s*\")([^\'*\"*\,*\}*]*)/g;
 //  why doesn't apple just update their stupid browser?
 
-	var pattern = /(\"FtpImagePath\"\s*:\s*\")([^\'*\,*\}*]*)/g
-	var rosterpage = await fetch(base_endpoint + user.baseurl + "/app/student#academicclass/").then(a => a.text());
-	var ftp_image_path = rosterpage.match(pattern);
+	let pattern = /(\"FtpImagePath\"\s*:\s*\")([^\'*\,*\}*]*)/g
+	let rosterpage = await fetch(base_endpoint + user.baseurl + "/app/student#academicclass/").then(a => a.text());
+	let ftp_image_path = rosterpage.match(pattern);
 	ftp_image_path = ftp_image_path[0];
 	ftp_image_path = "{" + ftp_image_path + "}";
 	ftp_image_path = JSON.parse(ftp_image_path);
-	
+
 	return ftp_image_path.FtpImagePath;
 }
 
 async function get_verification_token() {
 	// parse the response to get the token
-  var token_get = await fetch(base_endpoint + user.baseurl + "/app/");
-  var token_plaintext = await token_get.text();
-  var token_dom = (new DOMParser()).parseFromString(token_plaintext, "text/html");
-  var antiforge_div = token_dom.querySelector("#__AjaxAntiForgery");
-  var token = antiforge_div.firstElementChild.value;
+  let token_get = await fetch(base_endpoint + user.baseurl + "/app/");
+  let token_plaintext = await token_get.text();
+  let token_dom = (new DOMParser()).parseFromString(token_plaintext, "text/html");
+  let antiforge_div = token_dom.querySelector("#__AjaxAntiForgery");
+  let token = antiforge_div.firstElementChild.value;
   return token;
 }
 
@@ -201,7 +214,7 @@ function removehttp(url) {
 */
 function validurl(url) {
 	try {
-		var new_url = new URL(url);
+		let new_url = new URL(url);
 		return true;
 	}
 	catch (error) {

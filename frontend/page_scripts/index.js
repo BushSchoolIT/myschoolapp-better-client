@@ -15,9 +15,10 @@ function init() {
 					strings: [
 						"A better client for the Bush portal.",
 						"Reverse-engineered from the original webapp.",
-						"\"A godsend\" -Josh",
+						"\"A godsend\" -Aspen",
 						"Faster & lighter than the stock webapp.",
 						"Mobile friendly :)",
+						"Not your grandma's portal",
 						"Proudly made with vanilla JS",
 						"Are you still reading this?",
 						"Click log in if you're ready to be amazed",
@@ -55,7 +56,7 @@ function init() {
 			}, 150);
 		}
 	});
-	
+
 	let url = new URL(location);
 
 	let baseurl = url.searchParams.get("baseurl");

@@ -1,55 +1,73 @@
-var redirect;
-async function login() {
+let redirect;
+async function do_login() {
 	// grey out login button
 	document.querySelector("#loginbutton").classList.add("greyedout");
 	document.querySelector("#loginbutton").value = "loading...";
-	
-	var baseurl = addhttp(document.querySelector("#baseurl").value);
-	var post_data = {
-		From: "",
-		InterfaceSource: "WebApp",
-		Username: document.querySelector("#username").value,
-		Password: document.querySelector("#password").value
-	};
-	
+
+	let baseurl = addhttp(document.querySelector("#baseurl").value);
+	let username = document.querySelector("#username").value;
+	let password = document.querySelector("#password").value;
+
 	if (!validurl(baseurl)) {
 		shake_login();
 		show_popup("please enter your base URL");
 		return;
 	}
-	
-	if (!post_data.Username) {
+
+	if (!username) {
 		shake_login();
 		show_popup("please enter your username");
 		return;
 	}
-	
-	if (!post_data.Password) {
+
+	if (user.username != username) {
+		localforage.removeItem("user"); // clear data if different user
+		user = await get_user();
+	}
+	// store form data for future speed
+	user.username = username;
+	user.baseurl = baseurl;
+
+	let success = false;
+
+	if (!user.blackbaud_login) {
+		let response_json = await fetch(base_endpoint + baseurl + "/api/Bbid/StatusByName", {
+			method: "POST",
+			body: JSON.stringify({
+				userName: username,
+				rememberType: 2 // idk
+			}),
+			headers: {
+				"content-type": "application/json"
+			}
+		}).then(a => a.json());
+		if (response_json.Linked) user.blackbaud_login = true;
+	}
+
+	if (user.blackbaud_login && !window.bb_login) {
+		document.querySelector("#extension_popup").classList.remove("hidden");
+		setTimeout(() => {
+			document.querySelector("#extension_popup").classList.remove("ohidden");
+		}, 50);
+		return;
+	}
+
+	if (user.blackbaud_login && window.bb_login) {
+		user.token = await get_verification_token();
+		save_data(user);
+		success = await window.bb_login(username, baseurl);
+	}
+
+	if (!password && !success && !user.blackbaud_login) {
 		shake_login();
 		show_popup("please enter your password");
 		return;
 	}
-	
-	if (user.username != post_data.Username) {
-		localforage.removeItem("user"); // clear data if different user
-	}
-	// store form data for future speed
-	user.username = post_data.Username;
-	user.baseurl = baseurl;
-	user.token = await get_verification_token(); // logging in needs this token
-	save_data(user);
 
-	// this request to log you in.
-	var login_response = await fetch(base_endpoint + baseurl + "/api/SignIn", {
-		method: "POST",
-		body: JSON.stringify(post_data),
-		headers: {
-			"RequestVerificationToken": user.token
-		}
-	});
-	login_response = await login_response.json();
 
-	if (!login_response.LoginSuccessful) {
+	success = success || await login(username, password); // we're not saving user data here because login() saves it
+
+	if (!success) {
 		console.log("login unsucessful!");
 		show_popup("login failed");
 		shake_login();
@@ -57,23 +75,25 @@ async function login() {
 		document.querySelector("#loginbutton").value = "log in";
 		return;
 	}
-	console.log("Login successful!");
-	// redirect to page. 
+
+	console.log("we did it!")
+
+	// redirect to page.
 	location = redirect || user.last_page || "schedule.html";
 }
 
 async function init() {
-	var url = new URL(location);
+	let url = new URL(location);
 	redirect = url.searchParams.get("redirect");
 	redirect = safe_decode(redirect);
 
-	var popup = url.searchParams.get("popup");
+	let popup = url.searchParams.get("popup");
 	popup = safe_decode(popup);
 	if (popup) {
 		show_popup(popup);
 	}
 
-	var baseurl = url.searchParams.get("baseurl");
+	let baseurl = url.searchParams.get("baseurl");
 	baseurl = safe_decode(baseurl);
 	if (baseurl) {
 		document.querySelector("#baseurl").value = removehttp(baseurl);
@@ -89,7 +109,7 @@ async function init() {
 	document.querySelector("#loginbutton").classList.add("greyedout");
 	document.querySelector("#loginbutton").value = "loading...";
 
-	var loggedin = await logged_in();
+	let loggedin = await logged_in();
 	if (loggedin) {
 		location = redirect || user.last_page || "schedule.html";
 		return;

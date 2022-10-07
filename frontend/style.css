@@ -1,6 +1,6 @@
 @import url('theme.css');
 
-/* 
+/*
 	theme moved to /frontend/themes/
 */
 
@@ -107,21 +107,21 @@ body {
 		mask-image: var(--scroll-gradient);
 		-webkit-mask-image: var(--scroll-gradient); /* seriously chrome? I would expect this from safari maybe, but not chrome */
 	}
-	
+
 	.assignment:last-child {
 		margin-bottom: 50px;
 	}
-	
+
 	.col-parent {
 		height: 100%;
 		overflow: visible;
 	}
-	
+
 	#assignments_fullcont {
 		height: calc(100vh - 80px);
 		overflow: hidden;
 	}
-	
+
 	#bulletin-sidebar {
 		position: sticky;
 		top: 10px;
@@ -136,7 +136,7 @@ body {
 	.scrollable-col {
 		height: auto;
 	}
-	
+
 	.col-parent {
 		width: 100%;
 		flex-basis: 100%;
@@ -275,6 +275,7 @@ input[type=date] {
  .title_sep {
 	width: 70%;
 	margin: 5px 0 15px 0;
+	color: var(--theme-more-muted);
 }
 
 input:not([type=submit]) {
@@ -300,7 +301,7 @@ input:not([type=submit]):not(.hidden) {
 }
 
 /*
-	why is chrome so stupid???? 
+	why is chrome so stupid????
 	it took me like an hour to find this pseudoelement
 	AND IT'S NOT DOCUMENTED
 */
@@ -308,7 +309,7 @@ input::-webkit-calendar-picker-indicator {
 	display: none;
 }
 
-select {
+select, .select-selected {
 	appearance: none;
 	background: transparent;
 	display: inline-block;
@@ -322,6 +323,7 @@ select {
 	transition: 0.3s;
 	font-family: inherit;
 	line-height: inherit;
+	grid-area: select;
 }
 
 .select-cont {
@@ -333,8 +335,8 @@ select {
 	overflow-x: hidden;
 }
 
-select, .select-cont::after {
-	grid-area: select;
+.select-selected {
+	margin: 0 50px 0 5px;
 }
 
 /* this is stolen from the internet */
@@ -346,6 +348,26 @@ select, .select-cont::after {
   justify-self: end;
   background: var(--theme-text-color);
   clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+  grid-area: select;
+}
+
+.select-items {
+	position: absolute;
+	z-index: 12;
+	min-width: 200px;
+	font-size: calc(var(--theme-main-font-size) * 1.25);
+	padding: 0;
+	overflow: scroll;
+}
+
+.select-items > div {
+	padding: 4px 10px;
+	transition: 0.1s;
+	border-radius: 10px;
+}
+
+.select-items > div:hover {
+	background: var(--theme-medium-color);
 }
 
 .round-button {
@@ -370,7 +392,7 @@ select, .select-cont::after {
 }
 
 .round-button:hover {
-	filter: brightness(1.25); 
+	filter: brightness(1.25);
 }
 
 #settings {
@@ -380,7 +402,7 @@ select, .select-cont::after {
 	left: 3px;
 	bottom: 3px;
 	filter: brightness(1) drop-shadow(1px 1px 1px var(--theme-shadow-color));
-	--width-and-height: 12px;
+	--width-and-height: clamp(calc(var(--theme-main-font-size) * 0.65), 1.5vw, calc(var(--theme-main-font-size) * 0.8));
 	background: var(--theme-muted-highlight);
 }
 
@@ -645,6 +667,7 @@ input.button {
 #feedbackform {
 	max-width: 800px;
 	margin-right: 20px;
+	margin-bottom: 50px;
 }
 
 a:not([class]), .link {
@@ -938,7 +961,7 @@ body::-webkit-scrollbar {
 
 #topic_items {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(286px, 1fr)); 
+	grid-template-columns: repeat(auto-fit, minmax(286px, 1fr));
 	padding-bottom: 50px;
 }
 

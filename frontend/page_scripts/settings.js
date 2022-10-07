@@ -8,19 +8,19 @@ async function change_theme(id) {
 	Cookies.set("theme", themes[id].file, {expires: 100000});
 	user.theme = themes[id].file;
 	save_data(user);
-	
+
 	let url = "themes/" + themes[id].file;
 	let theme_text = themes[id].cached || await fetch(url).then(a => a.text());
 	themes[id].cached = theme_text;
-	
+
 	if (theme_element) theme_element.remove();
 	theme_element = document.createElement("style");
 	theme_element.innerHTML = theme_text;
 	document.querySelector("head").appendChild(theme_element);
-	
+
 	document.querySelector("#theme-" + current_theme).classList.add("indicator-blank");
 	document.querySelector("#theme-" + id).classList.remove("indicator-blank");
-	
+
 	themes[current_theme].current = false;
 	themes[id].current = true;
 	current_theme = id;
@@ -40,7 +40,7 @@ function init_settings() {
 			}
 		},
 	];
-	
+
 	for (let setting of settings) {
 		if (setting.type == "radio") {
 			setting.is_radio = true;
@@ -101,7 +101,7 @@ function change_setting(e) {
 			document.querySelector("#setting" + setting_index + "_" + old_value).classList.add("indicator-blank");
 			settings[setting_index].options[old_value].current = false;
 		}
-		
+
 		user[settings[setting_index].key] = e.target.value;
 	}
 	if (settings[setting_index].example) {
@@ -113,13 +113,10 @@ function change_setting(e) {
 async function handle_feedback(e) {
 	document.querySelector("#feedbackform").classList.add("ohidden");
 	let body = new FormData(e.target);
-	let response = await fetch("https://formspree.io/f/mbjwyvvq", {
+	let response = await fetch("https://formsubmit.co/a9fe7b9046627bf0e34d4c301f90da63", {
 		method: "POST",
-		body,
-		headers: {
-			accept: "application/json"
-		}
-	}).then(a => a.json());
+		body
+	}).then(a => a.text());
 	let feedback_text = "Thanks for your feedback :)";
 	if (response.error) {
 		feedback_text = "There was an error submitting the form. Please try again";
@@ -135,14 +132,14 @@ async function init() {
 	current_theme = themes.findIndex(a => a.file == cookie_theme);
 	current_theme = current_theme >= 0 ? current_theme : 0;
 	themes[current_theme].current = true;
-	
-	
+
+
 	user = await get_user();
 	if (cookie_theme != user.theme) {
 		user.theme = cookie_theme;
 		save_data(user);
 	}
-	
+
 	init_settings();
 	fill_template("settings_template", {themes, settings}, "output");
 	document.querySelector("#main-div").classList.remove("ohidden");
